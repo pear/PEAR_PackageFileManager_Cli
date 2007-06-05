@@ -1,0 +1,36 @@
+
+PEAR_PackageFileManager_Cli Release Notes
+=========================================
+
+Notes
+ - PHP Compat Info will need to be improved if this is to be included, PFM
+   interface will need to be debugged
+ - When editing an existing file, the baseinstalldir is guessed by preparsing 
+   the package file.
+
+Possible proposal discussion
+
+ - Coding standards for a script
+ - UI improvements
+ - Clear up release management
+ - Clear up baseinstalldir usage
+ - Licenses
+ - Can PFM import phprelease stuff, like <install> instructions?
+ - PEAR_PFM should be able to detect anything executable in the scripts 
+   directory and change role to script.  The baseinstall dir should also be set
+   to empty as the installer will try to create this directory under bin_dir 
+   regardless of the install-as definition. Also for any script, an install-as
+   definition should be added.
+
+Roadmap
+
+ - Delete dependencies individually
+ - File vs CVS mode
+ - Ability to add manage files
+ - Validation - batch and per answer
+ - Multiline answers (description)
+ - Add more options to dependencies (excludes, recommended)
+ - Add postinstall task
+ - Possibly store user settings, which would be saved in a .pfmrc file.
+ - Possibly let user determine release date and time
+ - Add options to replace task

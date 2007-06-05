@@ -1,0 +1,750 @@
+#!@php_bin@
+<?php
+/**
+ * PEAR_PackageFileManager_Cli
+ *
+ * PHP versions 4 and 5
+ *
+ * A command line interface to managing package files.
+ *
+ * @category   PEAR
+ * @package    PEAR_PackageFileManager_Cli
+ * @author     David Sanders <shangxiao@php.net>
+ * @license    http://www.gnu.org/copyleft/lesser.html  LGPL License 2.1
+ * @version    Release: @package_version@
+ * @link       
+ */
+
+include_once 'PEAR/PackageFileManager2.php';
+
+if (!class_exists('PEAR_PackageFileManager2')) {
+    die("Missing PEAR_PackageFileManager. Please check your PEAR installation.\n");
+}
+
+PEAR::setErrorHandling(PEAR_ERROR_DIE);
+
+define('WINDOWS', (substr(PHP_OS, 0, 3) == 'WIN'));
+$default_package_path = '.';
+
+// ref http://pear.php.net/group/docs/20040402-la.php
+$licenses = array(
+    'Apache'    => 'http://www.apache.org/licenses/',
+    'BSD Style' => 'http://www.opensource.org/licenses/bsd-license.php',
+    'LGPL'      => 'http://www.gnu.org/licenses/lgpl.html',
+    'MIT'       => 'http://www.opensource.org/licenses/mit-license.html',
+    'PHP'       => 'http://www.php.net/license/',
+);
+
+$tty = WINDOWS ? @fopen('\con', 'r') : @fopen('/dev/tty', 'r');
+
+if (!$tty) {
+    $tty = fopen('php://stdin', 'r');
+}
+
+function readTTY()
+{
+    global $tty;
+    return trim(fgets($tty, 1024));
+}
+
+function getList($array)
+{
+    if (empty($array)) {
+        return $array;
+    }
+
+    foreach ($array as $key => $val) {
+        break;
+    }
+
+    if ($key === 0) {
+        return $array;
+    } else {
+        return array($array);
+    }
+}
+
+
+function readAnswer($message, $required = false, $default = null, $options = null)
+{
+    if (!is_null($default)) {
+        $message .= ' [' . $default . ']';
+    }
+
+    if (!is_null($options)) {
+        $message .= ' (' . implode(',', $options) . ')';
+    }
+
+    if ($required) {
+        $message .= '*';
+    }
+
+    $message .= ': ';
+
+    echo $message;
+    $value = readTTY();
+
+    if (!is_null($default) && empty($value)) {
+         $value = $default;
+    } else if ($required) {
+        while ($value === '' || (!empty($options) && !in_array($value, $options))) {
+            echo $message;
+            $value = readTTY();
+        }
+    }
+
+    echo "\n";
+
+    return $value;
+}
+
+function readOption($message, $options)
+{
+    echo $message . "\n\n";
+
+    $i = 1;
+    foreach ($options as $option) {
+        echo '    ' . $i . ') ' . $option . "\n";
+        $i++;
+    }
+    echo "\n";
+    echo 'Please choose an option: ';
+    $value = readTTY();
+
+    while ($value === '' || $value < 1 || $value > count($options)) {
+        echo 'Please choose an option: ';
+        $value = readTTY();
+    }
+
+    return $options[$value - 1];
+}
+
+function abbreviate($string, $length, $dotdot = '...')
+{
+    if (strlen($string) > $length) {
+        return substr_replace($string, $dotdot, $length - strlen($dotdot));
+    } else {
+        return $string;
+    }
+}
+
+function menu($pfm)
+{
+    $attr = $pfm->getArray();
+
+    $summary     = abbreviate($attr['summary'], 40);
+    $description = abbreviate($attr['description'], 40);
+    $notes       = abbreviate($attr['notes'], 40);
+
+echo <<<EOT
+
+PEAR Package File Manager Command Line Tool
+
+    1. Package name                 [{$attr['name']}]
+    2. Channel                      [{$attr['channel']}]
+    3. Summary                      [{$summary}]
+    4. Description                  [{$description}]
+    5. Maintainers
+    6. Version                      [Release: {$attr['version']['release']} API: {$attr['version']['api']}]
+    7. Stability                    [Release: {$attr['stability']['release']} API: {$attr['stability']['api']}]
+    8. License                      [{$attr['license']['_content']}]
+    9. Notes                        [{$notes}]
+   10. Dependencies
+   11. Tasks
+   12. Regenerate contents
+   13. Echo package file to stdout
+   14. Save & Quit
+   15. Quit without saving          (ctrl-c)
+
+Please choose an option from the menu: 
+EOT;
+
+    $value = readTTY();
+
+    while ($value === '' || $value < 1 || $value > 15) {
+        echo 'Please choose an option from the menu: ';
+        $value = readTTY();
+    }
+
+    return $value;
+}
+
+function editDependencies($pfm)
+{
+    $value = dependencyMenu($pfm);
+
+    while (true) {
+
+        switch ($value) {
+
+            case 1:
+            default:
+            return;
+
+            case 2:
+            $type = readAnswer('Dependency type', true, 'pkg', array('pkg','ext','php','prog','os','sapi','zend'));
+
+            switch ($type) {
+
+                case 'php':
+                $version  = readAnswer('Dependency version', true);
+                $pfm->setPhpDep($version);
+                break 2;
+
+                case 'pkg':
+                $name        = readAnswer('Dependency name', true);
+                $is_optional = readAnswer('Is the dependency (o)ptional or (r)equired', true, 'r', array('o','r'));
+                $is_optional = $is_optional == 'o' ? 'optional' : 'required';
+                $is_channel  = readAnswer('Package type (c)hannel or (u)ri', true, 'c', array('c','u'));
+                if ($is_channel == 'c') {
+                    $channel  = readAnswer('Dependency channel', true, 'pear.php.net');
+                    $min      = readAnswer('Minimum version');
+                    $min      = empty($min) ? false : $min;
+                    $max      = readAnswer('Maximum version');
+                    $max      = empty($max) ? false : $max;
+                    $pfm->addPackageDepWithChannel($is_optional, $name, $channel, $min, $max);
+                } else {
+                    $uri  = readAnswer('Dependency uri', true);
+                    $pfm->addPackageDepWithChannel($is_optional, $name, $uri);
+                }
+
+                break 2;
+
+                case 'ext':
+                $name = readAnswer('Dependency name', true);
+                $is_optional = readAnswer('Is the dependency (o)ptional or (r)equired', true, 'r', array('o','r'));
+                $is_optional = $is_optional == 'o' ? 'optional' : 'required';
+                $min      = readAnswer('Minimum version');
+                $min      = empty($min) ? false : $min;
+                $max      = readAnswer('Maximum version');
+                $max      = empty($max) ? false : $max;
+                $pfm->addExtensionDep($is_optional, $name);
+                break 2;
+
+                case 'os':
+                $name = readAnswer('OS name', true);
+                $conflicts = readAnswer('Conflicts with this OS?', true, 'n', array('y','n'));
+                $conflicts = $conflicts === 'y';
+                $pfm->addOsDep($name, $conflicts);
+                break 2;
+            }
+
+            case 3:
+            $pfm->clearDeps();
+            $pfm->setPearinstallerDep('1.4.0');
+            break;
+        }
+
+        $value = dependencyMenu($pfm);
+    }
+}
+
+function dependencyMenu($pfm)
+{
+    $attr = $pfm->getArray();
+
+    echo <<<EOT
+
+Edit Dependencies
+
+    1. Return to main menu
+
+    2. Add new dependency
+    3. Clear all dependencies
+
+    4. Change PHP >= {$attr['dependencies']['required']['php']['min']}
+    5. Change PEAR Installer >= {$attr['dependencies']['required']['pearinstaller']['min']}
+
+    Dependencies:
+
+
+EOT;
+
+    $i = 5;
+
+    $deps = $pfm->getDependencies();
+
+    if (isset($deps['required']['package'])) {
+        foreach (getList($deps['required']['package']) as $dep) {
+
+            if (isset($dep['channel'])) {
+                $details = $dep['channel'];
+            } else if (isset($dep['uri'])) {
+                $details = $dep['uri'];
+            }
+
+            $i++;
+            echo <<<EOT
+    Required Package dependency "{$dep['name']}" - $details
+
+EOT;
+        }
+    }
+
+    if (isset($deps['required']['extension'])) {
+        foreach (getList($deps['required']['extension']) as $dep) {
+
+            $i++;
+            echo <<<EOT
+    Required Extension dependency "{$dep['name']}"
+
+EOT;
+        }
+    }
+ 
+    if (isset($deps['required']['os'])) {
+        foreach (getList($deps['required']['os']) as $dep) {
+
+            $name = '"' . $dep['name'] . '"';
+            if (isset($dep['conflicts'])) {
+                $name .= ', conflicts';
+            }
+
+            $i++;
+            echo <<<EOT
+    Required OS dependency $name
+
+EOT;
+        }
+    }
+
+    if (isset($deps['optional'])) {
+
+        if (isset($deps['optional']['package'])) {
+            foreach (getList($deps['optional']['package']) as $dep) {
+
+                if (isset($dep['channel'])) {
+                    $details = $dep['channel'];
+                } else if (isset($dep['uri'])) {
+                    $details = $dep['uri'];
+                }
+
+                $i++;
+                echo <<<EOT
+    Optional Package dependency "{$dep['name']}" - $details
+
+EOT;
+            }
+        }
+
+        if (isset($deps['optional']['extension'])) {
+            foreach (getList($deps['optional']['extension']) as $dep) {
+
+                $i++;
+                echo <<<EOT
+    Optional Extension dependency "{$dep['name']}"
+
+EOT;
+            }
+        }
+    }
+
+    echo <<<EOT
+
+Please choose an option from the menu: 
+EOT;
+
+    $value = readTTY();
+
+    while ($value === '' || $value < 1 || $value > 5) {
+        echo 'Please choose an option from the menu: ';
+        $value = readTTY();
+    }
+
+    return $value;
+}
+
+function editMaintainers($pfm)
+{
+    $value = maintainerMenu($pfm);
+
+    while (true) {
+
+        switch ($value) {
+
+            case 1:
+            return;
+
+            case 2:
+            $type     = readAnswer('What type of maintainer?', true, 'lead', array('lead','developer','contributor','helper'));
+            $name     = readAnswer('Enter maintainer' . '\'s name', true);
+            $username = readAnswer('Enter maintainer' . '\'s username', true);
+            $email    = readAnswer('Enter maintainer' . '\'s email', true);
+
+            $pfm->addMaintainer($type, $username, $name, $email);
+            break;
+        }
+ 
+        $maintainers = $pfm->getMaintainers();
+        if ($value >= 3 && $value <= count($maintainers) + 3) {
+            $person = $maintainers[$value - 3];
+            $pfm->deleteMaintainer($person['handle']);
+        }
+
+        $value = maintainerMenu($pfm);
+    }
+}
+
+function maintainerMenu($pfm)
+{
+    $attr = $pfm->getArray();
+ 
+    echo <<<EOT
+
+Edit Maintainers
+
+    1. Return to main menu
+
+    2. Add Maintainer
+
+
+EOT;
+
+    $i = 2;
+    // getMaintainers returns false if no leads are found, hiding other maintainers
+    $maintainers = $pfm->getMaintainers();
+    if ($maintainers !== false) {
+        foreach ($maintainers as $maintainer) {
+
+            $i++;
+            echo <<<EOT
+    $i. Delete {$maintainer['name']} - {$maintainer['role']} - {$maintainer['handle']} - {$maintainer['email']}
+
+EOT;
+        }
+    }
+
+    echo <<<EOT
+
+Please choose an option from the menu: 
+EOT;
+
+    $value = readTTY();
+
+    while ($value === '' || $value < 1 || $value > $i) {
+        echo 'Please choose an option from the menu: ';
+        $value = readTTY();
+    }
+
+    return $value;
+}
+
+function editTasks($pfm)
+{
+    $value = taskMenu($pfm);
+
+    while (true) {
+
+        switch ($value) {
+
+            case 1:
+            default:
+            return;
+
+            case 2:
+            $filelist = $pfm->getFilelist();
+            $options = array();
+            foreach ($filelist as $file) {
+                $options[] = $file['name'];
+            }
+
+            $filename = readOption('Choose a file to apply the task to', $options);
+            $from     = readAnswer('Replace from', true);
+            $to       = readAnswer('to', true);
+            $type     = readAnswer('type', true, 'pear-config');
+
+            $pfm->addReplacement($filename, $type, $from, $to);
+            break;
+
+            case 3:
+            $filelist = $pfm->getFilelist();
+            $options = array();
+            foreach ($filelist as $file) {
+                $options[] = $file['name'];
+            }
+
+            $filename = readOption('Choose a file to apply the task to', $options);
+            $pfm->addWindowsEol($filename);
+            break;
+
+            case 4:
+            $filelist = $pfm->getFilelist();
+            $options = array();
+            foreach ($filelist as $file) {
+                $options[] = $file['name'];
+            }
+
+            $filename = readOption('Choose a file to apply the task to', $options);
+            $pfm->addUnixEol($filename);
+            break;
+        }
+
+        $value = taskMenu($pfm);
+    }
+}
+
+function taskMenu($pfm)
+{
+    echo <<<EOT
+
+Edit Replacment Tasks
+
+    1. Return to main menu
+
+    2. Add replacment
+    3. Add Windows EOL
+    4. Add Unix EOL
+
+    Replacements:
+
+
+EOT;
+
+    $i = 5;
+
+    $attr = $pfm->getOptions();
+    if (!empty($attr['replacements'])) {
+        $replacements = $attr['replacements'];
+        foreach ($replacements as $path => $replacement) {
+
+            $i++;
+            echo <<<EOT
+    $i. $path
+
+EOT;
+        }
+    } else {
+        echo <<<EOT
+    None listed
+
+EOT;
+    }
+
+    echo <<<EOT
+
+Please choose an option from the menu: 
+EOT;
+
+    $value = readTTY();
+
+    while ($value === '' || $value < 1 || $value > 4) {
+        echo 'Please choose an option from the menu: ';
+        $value = readTTY();
+    }
+
+    return $value;
+}
+
+$retrieved_baseinstalldir = array();
+function elementStart($parser, $name, $attrs)
+{
+    if ($name === 'FILE' && isset($attrs['BASEINSTALLDIR'])) {
+        global $retrieved_baseinstalldir;
+        if (!in_array($attrs['BASEINSTALLDIR'], $retrieved_baseinstalldir)) {
+            $retrieved_baseinstalldir[] = $attrs['BASEINSTALLDIR'];
+        }
+    }
+}
+
+function elementEnd($parser, $name)
+{
+    // do nothing
+    return;
+}
+
+
+?>
+
+PEAR Package File Manager Command Line Tool
+
+<?php
+
+
+if (!isset($argv[1])) {
+
+    $package_path = readAnswer('Please enter the location of your package', true, $default_package_path);
+    while (!is_dir($package_path)) {
+        $package_path = readAnswer('Please enter the location of your package', true, $default_package_path);
+    }
+
+} else {
+    
+    $package_path = $argv[1];
+}
+
+$package_file = $package_path . DIRECTORY_SEPARATOR . 'package.xml';
+
+if (!file_exists($package_file)) {
+
+    if (!is_writable($package_path)) {
+        die("Unable to write package file\n");
+    }
+
+    echo 'Creating a new package file ' . "...\n\n";
+
+    $pfm = new PEAR_PackageFileManager2;
+    $pfm->setPackageType('php');
+
+    $baseinstalldir = readAnswer('Enter the base install directory', true);
+
+    $pfm->setOptions(array(
+        'packagedirectory' => $package_path,
+        'baseinstalldir'   => $baseinstalldir,
+        ));
+
+    $pfm->setPackage(         readAnswer('Enter the name of the package', true));
+    $pfm->setChannel(         readAnswer('Enter the name of the channel', true, 'pear.php.net'));
+    $pfm->setSummary(         readAnswer('Enter a 1 line summary', true));
+    $pfm->setDescription(     readAnswer('Enter a description', true));
+    $release_version      =   readAnswer('Enter the release version', true);
+    $pfm->setReleaseVersion($release_version);
+    $pfm->setAPIVersion(      readAnswer('Enter the API version', true, $release_version));
+    $release_stability    =   readAnswer('Choose a release stability', true, 'alpha', array('alpha','beta','stable'));
+    $pfm->setReleaseStability($release_stability);
+    $pfm->setAPIStability(    readAnswer('Choose an API stability', true, $release_stability, array('alpha','beta','stable')));
+    $pfm->setNotes(           readAnswer('Enter any release notes', true));
+    $pfm->setPhpDep(          readAnswer('Enter the minimum PHP version', true, '5'));
+    $pfm->setPearinstallerDep(readAnswer('Enter the minimum PEAR Installer version', true, '1.4.0'));
+
+    $license = readOption('Please choose a license from one of the following options', array_keys($licenses));
+    $pfm->setLicense($license, $licenses[$license]);
+
+    $number_maintainers            = readAnswer('How many maintainers?', true);
+    while (!is_numeric($number_maintainers) || $number_maintainers < 1) {
+        echo 'Bad answer... ';
+        $number_maintainers = readAnswer('How many maintainers?', true);
+    }
+
+    for ($i = 1; $i <= $number_maintainers; $i++) {
+        $type     = readAnswer('What type of maintainer is #' . $i . '?', true, 'lead', array('lead','developer','contributor','helper'));
+        $name     = readAnswer('Enter maintainer #' . $i . '\'s name', true);
+        $username = readAnswer('Enter maintainer #' . $i . '\'s username', true);
+        $email    = readAnswer('Enter maintainer #' . $i . '\'s email', true);
+
+        $pfm->addMaintainer($type, $username, $name, $email);
+    }
+
+    $pfm->generateContents();
+
+} else {
+
+    if (!is_writable($package_file)) {
+        die("Unable to write package file\n");
+    }
+
+    // XXX
+    // try to automatically determine the baseinstalldir
+
+    $xml_parser = xml_parser_create();
+    xml_set_element_handler($xml_parser, "elementStart", "elementEnd");
+
+    if (!($fp = fopen($package_file, "r"))) {
+        die("could not open package file\n");
+    }
+
+    while ($data = fread($fp, 4096)) {
+        if (!xml_parse($xml_parser, $data, feof($fp))) {
+            die(sprintf("XML error: %s at line %d",
+                        xml_error_string(xml_get_error_code($xml_parser)),
+                        xml_get_current_line_number($xml_parser))."\n");
+        }
+    }
+    xml_parser_free($xml_parser);
+    fclose($fp);
+
+    $baseinstalldir = readOption('Enter the base install directory', $retrieved_baseinstalldir);
+    $pfm = &PEAR_PackageFileManager2::importOptions($package_file, array(
+        'packagedirectory' => $package_path,
+        'baseinstalldir'   => $baseinstalldir,
+        'clearcontents'    => false,
+        ));
+    $pfm->setPackageType('php');
+
+    // refresh the md5sums
+    $pfm->generateContents();
+}
+
+$value = menu($pfm);
+
+$attr = $pfm->getArray();
+
+while (true) {
+
+    echo "\n";
+
+    switch ($value) {
+
+        case 1:
+        $pfm->setPackage(readAnswer('Enter the name of the package', true, $attr['name']));
+        break;
+
+        case 2:
+        $pfm->setChannel(readAnswer('Enter the name of the channel', true, $attr['channel']));
+        break;
+
+        case 3:
+        $pfm->setSummary(readAnswer('Enter a 1 line summary', true, $attr['summary']));
+        break;
+
+        case 4:
+        $pfm->setDescription(readAnswer('Enter a description', true, $attr['description']));
+        break;
+
+        case 5:
+        editMaintainers($pfm);
+        break;
+
+        case 6:
+        $release_version      = readAnswer('Enter the release version', true, $attr['version']['release']);
+        $pfm->setReleaseVersion($release_version);
+        $pfm->setAPIVersion(    readAnswer('Enter the API version', true, $attr['version']['api']));
+        break;
+
+        case 7:
+        $release_stability    = readAnswer('Choose a release stability', true, $attr['stability']['release'], array('alpha','beta','stable'));
+        $pfm->setReleaseStability($release_stability);
+        $pfm->setAPIStability(  readAnswer('Choose an API stability', true, $attr['stability']['api'], array('alpha','beta','stable')));
+        break;
+
+        case 8:
+        $license = readOption('Please choose a license from one of the following options', array_keys($licenses));
+        $pfm->setLicense($license, $licenses[$license]);
+        break;
+
+        case 9:
+        $pfm->setNotes(readAnswer('Enter any release notes', true, $attr['notes']));
+        break;
+
+        case 10:
+        editDependencies($pfm);
+        break;
+
+        case 11:
+        editTasks($pfm);
+        break;
+
+        case 12:
+        $pfm->generateContents();
+        break;
+
+        case 13:
+        default:
+        // echo package file contents
+        $pfm->debugPackageFile();
+        break;
+
+        case 14:
+        // save & quit
+        $pfm->writePackageFile();
+        exit(0);
+
+        case 15:
+        // quit without saving
+        echo "Goodbye\n\n";
+        exit(0);
+    }
+
+    $value = menu($pfm);
+}
+
+?>
