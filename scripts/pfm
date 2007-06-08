@@ -136,12 +136,14 @@ function menu($pfm)
     $description = abbreviate($attr['description'], 40);
     $notes       = abbreviate($attr['notes'], 40);
 
+    $channel = isset($attr['channel']) ? ('Channel: ' . $attr['channel']) : ('URI: ' . $attr['uri']);
+
 echo <<<EOT
 
 PEAR Package File Manager Command Line Tool
 
     1. Package name                 [{$attr['name']}]
-    2. Channel                      [{$attr['channel']}]
+    2. Channel/URI                  [{$channel}]
     3. Summary                      [{$summary}]
     4. Description                  [{$description}]
     5. Maintainers
@@ -593,7 +595,13 @@ if (!file_exists($package_file)) {
         ));
 
     $pfm->setPackage(         readAnswer('Enter the name of the package', true));
-    $pfm->setChannel(         readAnswer('Enter the name of the channel', true, 'pear.php.net'));
+
+    $channel_type = readAnswer('Channel or URI based package?', true, 'c', array('c','u'));
+    if ($channel_type === 'c') {
+        $pfm->setChannel(readAnswer('Enter the name of the channel', true, 'pear.php.net'));
+    } else {
+        $pfm->setUri(readAnswer('Enter the package URI', true));
+    }
     $pfm->setSummary(         readAnswer('Enter a 1 line summary', true));
     $pfm->setDescription(     readAnswer('Enter a description', true));
     $release_version      =   readAnswer('Enter the release version', true);
@@ -665,11 +673,11 @@ if (!file_exists($package_file)) {
 
 $value = menu($pfm);
 
-$attr = $pfm->getArray();
-
 while (true) {
 
     echo "\n";
+
+    $attr = $pfm->getArray();
 
     switch ($value) {
 
@@ -678,7 +686,21 @@ while (true) {
         break;
 
         case 2:
-        $pfm->setChannel(readAnswer('Enter the name of the channel', true, $attr['channel']));
+        $default_channel_type = isset($attr['uri']) ? 'u' : 'c';
+        $channel_type = readAnswer('Channel or URI based package?', true, $default_channel_type, array('c','u'));
+        if ($channel_type === 'c') {
+            if (isset($attr['channel'])) {
+                $pfm->setChannel(readAnswer('Enter the name of the channel', true, $attr['channel']));
+            } else {
+                $pfm->setChannel(readAnswer('Enter the name of the channel', true, 'pear.php.net'));
+            }
+        } else {
+            if (isset($attr['uri'])) {
+                $pfm->setUri(readAnswer('Enter the package URI', true, $attr['uri']));
+            } else {
+                $pfm->setUri(readAnswer('Enter the package URI', true));
+            }
+        }
         break;
 
         case 3:
