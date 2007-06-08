@@ -35,6 +35,56 @@ $licenses = array(
     'PHP'       => 'http://www.php.net/license/',
 );
 
+$package_info_params = array(
+    'name',
+    'summary',
+    'channel',
+    'notes',
+    'extends',
+    'description',
+    'release_notes',
+    'license',
+    'release-license',
+    'license-uri',
+    'version',
+    'api-version',
+    'state',
+    'api-state',
+    'release_date',
+    'date',
+    'time',
+);
+
+$pear_config_params = array(
+    'auto_discover',
+    'default_channel',
+    'http_proxy',
+    'master_server',
+    'preferred_mirror',
+    'remote_config',
+    'bin_dir',
+    'doc_dir',
+    'ext_dir',
+    'php_dir',
+    'cache_dir',
+    'data_dir',
+    'download',
+    'php_bin',
+    'php_ini',
+    'temp_dir',
+    'test_dir',
+    'cache_ttl',
+    'preferred_state',
+    'umask',
+    'verbose',
+    'password',
+    'sig_bin',
+    'sig_keydir',
+    'sig_keyid',
+    'sig_type',
+);
+
+
 $tty = WINDOWS ? @fopen('\con', 'r') : @fopen('/dev/tty', 'r');
 
 if (!$tty) {
@@ -116,6 +166,8 @@ function readOption($message, $options)
         $value = readTTY();
     }
 
+    echo "\n";
+
     return $options[$value - 1];
 }
 
@@ -176,6 +228,8 @@ function editDependencies($pfm)
     $value = dependencyMenu($pfm);
 
     while (true) {
+
+        echo "\n";
 
         switch ($value) {
 
@@ -362,6 +416,8 @@ function editMaintainers($pfm)
 
     while (true) {
 
+        echo "\n";
+
         switch ($value) {
 
             case 1:
@@ -437,6 +493,8 @@ function editTasks($pfm)
 
     while (true) {
 
+        echo "\n";
+
         switch ($value) {
 
             case 1:
@@ -453,10 +511,18 @@ function editTasks($pfm)
             }
 
             $filename = readOption('Choose a file to apply the task to', $options);
-            $from     = readAnswer('Replace from', true);
-            $to       = readAnswer('to', true);
             $type     = readAnswer('Replacement from pear-config or package-info?', true, 'pear', array('pear','package'));
-            $type     = $type === 'pear' ? 'pear-config' : 'package-info';
+            $from     = readAnswer('Replace from', true);
+
+            if ($type === 'pear') {
+                $type = 'pear-config';
+                global $pear_config_params;
+                $to   = readAnswer('Replace with', true, $pear_config_params[0], $pear_config_params);
+            } else {
+                $type = 'package-info';
+                global $package_info_params;
+                $to   = readAnswer('Replace with', true, $package_info_params[0], $package_info_params);
+            }
 
             $pfm->addReplacement($filename, $type, $from, $to);
             break;
