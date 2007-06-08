@@ -508,13 +508,17 @@ EOT;
     $attr = $pfm->getOptions();
     if (!empty($attr['replacements'])) {
         $replacements = $attr['replacements'];
-        foreach ($replacements as $path => $replacement) {
+        foreach ($replacements as $path => $file_replacements) {
+            foreach ($file_replacements as $replacement) {
 
-            $i++;
-            echo <<<EOT
-    $i. $path
+                $params = $replacement->getXml();
+
+                $i++;
+                echo <<<EOT
+    $i. $path - Type: {$params['attribs']['type']} From: {$params['attribs']['from']} To: {$params['attribs']['to']}
 
 EOT;
+            }
         }
     } else {
         echo <<<EOT
