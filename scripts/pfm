@@ -453,7 +453,8 @@ function editTasks($pfm)
             $filename = readOption('Choose a file to apply the task to', $options);
             $from     = readAnswer('Replace from', true);
             $to       = readAnswer('to', true);
-            $type     = readAnswer('type', true, 'pear-config');
+            $type     = readAnswer('Replacement from pear-config or package-info?', true, 'pear', array('pear','package'));
+            $type     = $type === 'pear' ? 'pear-config' : 'package-info';
 
             $pfm->addReplacement($filename, $type, $from, $to);
             break;
