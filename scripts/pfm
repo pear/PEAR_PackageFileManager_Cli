@@ -613,7 +613,7 @@ EOT;
 $retrieved_baseinstalldir = array();
 function elementStart($parser, $name, $attrs)
 {
-    if ($name === 'FILE' && isset($attrs['BASEINSTALLDIR'])) {
+    if (($name === 'FILE' || $name === 'DIR') && isset($attrs['BASEINSTALLDIR'])) {
         global $retrieved_baseinstalldir;
         if (!in_array($attrs['BASEINSTALLDIR'], $retrieved_baseinstalldir)) {
             $retrieved_baseinstalldir[] = $attrs['BASEINSTALLDIR'];
