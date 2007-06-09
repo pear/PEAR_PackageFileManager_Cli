@@ -531,8 +531,7 @@ function editTasks($pfm)
 
             case 1:
             default:
-            // need to regenerate to refresh the tasks
-            $pfm->generateContents();
+            generateContents($pfm);
             return;
 
             case 2:
@@ -652,7 +651,7 @@ EOT;
 $retrieved_baseinstalldir = array();
 function elementStart($parser, $name, $attrs)
 {
-    if (($name === 'FILE' || $name === 'DIR') && isset($attrs['BASEINSTALLDIR'])) {
+    if (($name === 'FILE' || $name === 'DIR') && isset($attrs['BASEINSTALLDIR']) && $attrs['BASEINSTALLDIR'] !== '') {
         global $retrieved_baseinstalldir;
         if (!in_array($attrs['BASEINSTALLDIR'], $retrieved_baseinstalldir)) {
             $retrieved_baseinstalldir[] = $attrs['BASEINSTALLDIR'];
@@ -666,6 +665,45 @@ function elementEnd($parser, $name)
     return;
 }
 
+
+//
+// Refresh the contents with new files, updated md5sums
+//
+function generateContents($pfm)
+{
+    // refresh the contents
+    $pfm->generateContents();
+
+    // refresh the filelist
+    $filelist = $pfm->getFilelist(true);
+
+    // foreach script in the scripts dir, remove the baseinstalldir and as an install-as
+    foreach ($filelist as $file_details) {
+        $file = $file_details['attribs'];
+
+        if ($file['role'] === 'script') {
+
+            $installed_as = false;
+            if (isset($pfm->_packageInfo['phprelease']['filelist']['install'])) {
+                foreach ($pfm->_packageInfo['phprelease']['filelist']['install'] as $install) {
+                    if ($install['attribs']['name'] === $file['name']) {
+                        $installed_as = true;
+                    }
+                }
+            }
+
+            if (!$installed_as) {
+                $path_parts = pathinfo($file['name']);
+                $pfm->addInstallAs($file['name'], $path_parts['basename']);
+            }
+
+            if ($file['baseinstalldir'] !== '') {
+                // clear the baseinstalldir
+                $pfm->setFileAttribute($file['name'], 'baseinstalldir', '');
+            }
+        }
+    }
+}
 
 
 //
@@ -763,7 +801,7 @@ if (!file_exists($package_file)) {
         $pfm->addMaintainer($type, $username, $name, $email);
     }
 
-    $pfm->generateContents();
+    generateContents($pfm);
 
 } else {
 
@@ -802,8 +840,9 @@ if (!file_exists($package_file)) {
 
     //
     // - Don't clearcontents - this will erase existing file settings like tasks, roles, baseinstalldir, etc
-    // - Do regenerate the contents as this will refresh the md5sums
     // - Don't setPackageType() - this will erase the settings in <phprelease>
+    // - Do regenerate the contents as this will refresh the md5sums
+    // - Do regenerate the filelist from the refreshed contents
     //
 
     $pfm = &PEAR_PackageFileManager2::importOptions($package_file, array(
@@ -819,8 +858,8 @@ if (!file_exists($package_file)) {
                               ),
         ));
 
-    // refresh the md5sums
-    $pfm->generateContents();
+    // refresh the contents and filelist
+    generateContents($pfm);
 }
 
 
@@ -902,7 +941,7 @@ while (true) {
         break;
 
         case 12:
-        $pfm->generateContents();
+        generateContents($pfm);
         break;
 
         case 13:
