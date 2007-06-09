@@ -3,29 +3,40 @@
  <name>PEAR_PackageFileManager_Cli</name>
  <channel>pear.php.net</channel>
  <summary>A command line interface to PEAR_PackageFileManager</summary>
- <description>A command line interface for creating and editing package.xml files.</description>
+ <description>A command line interface to PEAR_PackageFileManager. Use this
+tool as a quick alternative to writing a php script to create or edit your
+package xml files.
+ 
+This tool is currently in an alpha release state. Feel free to test it out and 
+raise any bugs or feature requests with the functionality or user interface. 
+Feedback is always appreciated.</description>
  <lead>
   <name>David Sanders</name>
   <user>shangxiao</user>
   <email>shangxiao@php.net</email>
   <active>yes</active>
  </lead>
- <date>2007-06-06</date>
- <time>02:29:12</time>
+ <date>2007-06-09</date>
+ <time>20:27:43</time>
  <version>
-  <release>0.1.0</release>
-  <api>0.1.0</api>
+  <release>0.2.0</release>
+  <api>0.2.0</api>
  </version>
  <stability>
   <release>alpha</release>
   <api>alpha</api>
  </stability>
  <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
- <notes>Initial Release</notes>
+ <notes>- Added support for URI 'channel'.
+- Added support for scripts by setting the role of any file in the scripts 
+  dir, removing the baseinstalldir attribute and adding install directives.
+- Improved replacement task questions by listing available replacement 
+  parameters.
+- Added a few other improvements</notes>
  <contents>
   <dir baseinstalldir="PEAR/PackageFileManager" name="/">
-   <file baseinstalldir="PEAR/PackageFileManager" md5sum="57867cd5612b049da9a3d895b209568a" name="docs/release_notes.txt" role="doc" />
-   <file baseinstalldir="" md5sum="150a6d06acc77cb057f0f08eac7c0a28" name="scripts/pfm" role="script">
+   <file baseinstalldir="PEAR/PackageFileManager" md5sum="0fa37914f83f6e51eb3c5fd9d1ca9dda" name="docs/release_notes.txt" role="doc" />
+   <file baseinstalldir="" md5sum="ab615e77bc94c6363ca7cdac9c23c204" name="scripts/pfm" role="script">
     <tasks:replace from="@php_bin@" to="php_bin" type="pear-config" />
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
@@ -67,6 +78,24 @@
    <date>2007-06-06</date>
    <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
    <notes>Initial Release</notes>
+  </release>
+  <release>
+   <version>
+    <release>0.2.0</release>
+    <api>0.2.0</api>
+   </version>
+   <stability>
+    <release>alpha</release>
+    <api>alpha</api>
+   </stability>
+   <date>2007-06-09</date>
+   <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
+ <notes>- Added support for URI 'channel'.
+- Added support for scripts by setting the role of any file in the scripts 
+  dir, removing the baseinstalldir attribute and adding install directives.
+- Improved replacement task questions by listing available replacement 
+  parameters.
+- Added a few other improvements</notes>
   </release>
  </changelog>
 </package>
