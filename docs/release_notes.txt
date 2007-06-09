@@ -2,6 +2,18 @@
 PEAR_PackageFileManager_Cli Release Notes
 =========================================
 
+Changelog
+---------
+
+0.2.0 - 9 June 2007
+  - Added support for URI 'channel'.
+  - Added support for scripts by setting the role of any file in the 'scripts' 
+    dir, removing the baseinstalldir attribute and adding install directives.
+  - Improved replacement task questions by listing available replacement 
+    parameters.
+  - Added a few other improvements
+
+
 Notes
 -----
  - PHP Compat Info will need to be improved if this is to be included, PFM
