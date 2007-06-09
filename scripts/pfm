@@ -531,6 +531,7 @@ function editTasks($pfm)
 
             case 1:
             default:
+            // refresh the contents to show the updated tasks
             generateContents($pfm);
             return;
 
