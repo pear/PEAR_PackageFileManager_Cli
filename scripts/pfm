@@ -35,6 +35,7 @@ $licenses = array(
     'PHP'       => 'http://www.php.net/license/',
 );
 
+// these were taken out of PEAR/Task/Replace.php
 $package_info_params = array(
     'name',
     'summary',
@@ -55,6 +56,7 @@ $package_info_params = array(
     'time',
 );
 
+// are all these necessary?
 $pear_config_params = array(
     'auto_discover',
     'default_channel',
@@ -114,7 +116,12 @@ function getList($array)
     }
 }
 
-
+/**
+ * Post a queston and read an answer from the console.
+ *
+ * The question may be required, have a default answer and a list of options
+ * to choose from.
+ */
 function readAnswer($message, $required = false, $default = null, $options = null)
 {
     if (!is_null($default)) {
@@ -148,6 +155,10 @@ function readAnswer($message, $required = false, $default = null, $options = nul
     return $value;
 }
 
+/**
+ * Post a list of numbered options in a menu-like fashion and read the 
+ * answer from the console 
+ */
 function readOption($message, $options)
 {
     echo $message . "\n\n";
@@ -171,6 +182,9 @@ function readOption($message, $options)
     return $options[$value - 1];
 }
 
+/**
+ * Cut a string down to a certain size, if need be, and append with '...'
+ */
 function abbreviate($string, $length, $dotdot = '...')
 {
     if (strlen($string) > $length) {
@@ -180,6 +194,9 @@ function abbreviate($string, $length, $dotdot = '...')
     }
 }
 
+/**
+ * Main menu
+ */
 function menu($pfm)
 {
     $attr = $pfm->getArray();
@@ -223,6 +240,9 @@ EOT;
     return $value;
 }
 
+/**
+ * Edit Dependencies 'screen'
+ */
 function editDependencies($pfm)
 {
     $value = dependencyMenu($pfm);
@@ -295,6 +315,9 @@ function editDependencies($pfm)
     }
 }
 
+/**
+ * Menu for Edit Dependencies 'screen'
+ */
 function dependencyMenu($pfm)
 {
     $attr = $pfm->getArray();
@@ -410,6 +433,9 @@ EOT;
     return $value;
 }
 
+/**
+ * Edit Maintainers 'screen'
+ */
 function editMaintainers($pfm)
 {
     $value = maintainerMenu($pfm);
@@ -443,6 +469,9 @@ function editMaintainers($pfm)
     }
 }
 
+/**
+ * Menu for Edit Maintainers 'screen'
+ */
 function maintainerMenu($pfm)
 {
     $attr = $pfm->getArray();
@@ -487,6 +516,9 @@ EOT;
     return $value;
 }
 
+/**
+ * Edit Tasks 'screen'
+ */
 function editTasks($pfm)
 {
     $value = taskMenu($pfm);
@@ -554,6 +586,9 @@ function editTasks($pfm)
     }
 }
 
+/**
+ * Menu for Edit Tasks 'screen'
+ */
 function taskMenu($pfm)
 {
     echo <<<EOT
@@ -610,6 +645,10 @@ EOT;
     return $value;
 }
 
+//
+// XML callbacks
+//
+
 $retrieved_baseinstalldir = array();
 function elementStart($parser, $name, $attrs)
 {
@@ -626,6 +665,12 @@ function elementEnd($parser, $name)
     // do nothing
     return;
 }
+
+
+
+//
+// Start Here
+//
 
 
 ?>
@@ -651,6 +696,11 @@ $package_file = $package_path . DIRECTORY_SEPARATOR . 'package.xml';
 
 if (!file_exists($package_file)) {
 
+    //
+    // Create a new package file
+    //
+
+
     if (!is_writable($package_path)) {
         die("Unable to write package file\n");
     }
@@ -665,6 +715,13 @@ if (!file_exists($package_file)) {
     $pfm->setOptions(array(
         'packagedirectory' => $package_path,
         'baseinstalldir'   => $baseinstalldir,
+        // add scripts dir to the default list
+        'dir_roles'        => array(
+                                'docs'     => 'doc',
+                                'examples' => 'doc',
+                                'tests'    => 'test',
+                                'scripts'  => 'script',
+                              ),
         ));
 
     $pfm->setPackage(         readAnswer('Enter the name of the package', true));
@@ -675,6 +732,7 @@ if (!file_exists($package_file)) {
     } else {
         $pfm->setUri(readAnswer('Enter the package URI', true));
     }
+
     $pfm->setSummary(         readAnswer('Enter a 1 line summary', true));
     $pfm->setDescription(     readAnswer('Enter a description', true));
     $release_version      =   readAnswer('Enter the release version', true);
@@ -690,7 +748,7 @@ if (!file_exists($package_file)) {
     $license = readOption('Please choose a license from one of the following options', array_keys($licenses));
     $pfm->setLicense($license, $licenses[$license]);
 
-    $number_maintainers            = readAnswer('How many maintainers?', true);
+    $number_maintainers = readAnswer('How many maintainers?', true);
     while (!is_numeric($number_maintainers) || $number_maintainers < 1) {
         echo 'Bad answer... ';
         $number_maintainers = readAnswer('How many maintainers?', true);
@@ -709,9 +767,15 @@ if (!file_exists($package_file)) {
 
 } else {
 
+    //
+    // Use the existing package file
+    //
+
     if (!is_writable($package_file)) {
         die("Unable to write package file\n");
     }
+
+    extension_loaded('xml') or die('Missing XML extension: Please check your PHP installation');
 
     // XXX
     // try to automatically determine the baseinstalldir
@@ -734,15 +798,35 @@ if (!file_exists($package_file)) {
     fclose($fp);
 
     $baseinstalldir = readOption('Enter the base install directory', $retrieved_baseinstalldir);
+
+
+    //
+    // - Don't clearcontents - this will erase existing file settings like tasks, roles, baseinstalldir, etc
+    // - Do regenerate the contents as this will refresh the md5sums
+    // - Don't setPackageType() - this will erase the settings in <phprelease>
+    //
+
     $pfm = &PEAR_PackageFileManager2::importOptions($package_file, array(
         'packagedirectory' => $package_path,
         'baseinstalldir'   => $baseinstalldir,
         'clearcontents'    => false,
+        // add scripts dir to the default list
+        'dir_roles'        => array(
+                                'docs'     => 'doc',
+                                'examples' => 'doc',
+                                'tests'    => 'test',
+                                'scripts'  => 'script',
+                              ),
         ));
 
     // refresh the md5sums
     $pfm->generateContents();
 }
+
+
+//
+// Main menu loop
+//
 
 $value = menu($pfm);
 
@@ -789,15 +873,15 @@ while (true) {
         break;
 
         case 6:
-        $release_version      = readAnswer('Enter the release version', true, $attr['version']['release']);
+        $release_version = readAnswer('Enter the release version', true, $attr['version']['release']);
         $pfm->setReleaseVersion($release_version);
-        $pfm->setAPIVersion(    readAnswer('Enter the API version', true, $attr['version']['api']));
+        $pfm->setAPIVersion(readAnswer('Enter the API version', true, $attr['version']['api']));
         break;
 
         case 7:
-        $release_stability    = readAnswer('Choose a release stability', true, $attr['stability']['release'], array('alpha','beta','stable'));
+        $release_stability = readAnswer('Choose a release stability', true, $attr['stability']['release'], array('alpha','beta','stable'));
         $pfm->setReleaseStability($release_stability);
-        $pfm->setAPIStability(  readAnswer('Choose an API stability', true, $attr['stability']['api'], array('alpha','beta','stable')));
+        $pfm->setAPIStability(readAnswer('Choose an API stability', true, $attr['stability']['api'], array('alpha','beta','stable')));
         break;
 
         case 8:
