@@ -686,7 +686,7 @@ function generateContents($pfm)
 
             $installed_as = false;
             if (isset($pfm->_packageInfo['phprelease']['filelist']['install'])) {
-                foreach ($pfm->_packageInfo['phprelease']['filelist']['install'] as $install) {
+                foreach (getList($pfm->_packageInfo['phprelease']['filelist']['install']) as $install) {
                     if ($install['attribs']['name'] === $file['name']) {
                         $installed_as = true;
                     }
