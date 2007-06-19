@@ -197,7 +197,7 @@ function abbreviate($string, $length, $dotdot = '...')
 /**
  * Main menu
  */
-function menu($pfm)
+function menu(&$pfm)
 {
     $attr = $pfm->getArray();
 
@@ -243,7 +243,7 @@ EOT;
 /**
  * Edit Dependencies 'screen'
  */
-function editDependencies($pfm)
+function editDependencies(&$pfm)
 {
     $value = dependencyMenu($pfm);
 
@@ -318,7 +318,7 @@ function editDependencies($pfm)
 /**
  * Menu for Edit Dependencies 'screen'
  */
-function dependencyMenu($pfm)
+function dependencyMenu(&$pfm)
 {
     $attr = $pfm->getArray();
 
@@ -436,7 +436,7 @@ EOT;
 /**
  * Edit Maintainers 'screen'
  */
-function editMaintainers($pfm)
+function editMaintainers(&$pfm)
 {
     $value = maintainerMenu($pfm);
 
@@ -472,7 +472,7 @@ function editMaintainers($pfm)
 /**
  * Menu for Edit Maintainers 'screen'
  */
-function maintainerMenu($pfm)
+function maintainerMenu(&$pfm)
 {
     $attr = $pfm->getArray();
  
@@ -519,7 +519,7 @@ EOT;
 /**
  * Edit Tasks 'screen'
  */
-function editTasks($pfm)
+function editTasks(&$pfm)
 {
     $value = taskMenu($pfm);
 
@@ -589,7 +589,7 @@ function editTasks($pfm)
 /**
  * Menu for Edit Tasks 'screen'
  */
-function taskMenu($pfm)
+function taskMenu(&$pfm)
 {
     echo <<<EOT
 
@@ -670,7 +670,7 @@ function elementEnd($parser, $name)
 //
 // Refresh the contents with new files, updated md5sums
 //
-function generateContents($pfm)
+function generateContents(&$pfm)
 {
     // refresh the contents
     $pfm->generateContents();
