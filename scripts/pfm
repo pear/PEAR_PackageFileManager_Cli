@@ -450,10 +450,33 @@ function editMaintainers(&$pfm)
             return;
 
             case 2:
+
+            $maintainer_usernames = array();
+            $maintainers = $pfm->getMaintainers();
+            if ($maintainers !== false) {
+                foreach ($maintainers as $maintainer) {
+                    $maintainer_usernames[] = $maintainer['handle'];
+                }
+            }
+
+            // set the pear username as default if it isn't already listed
+            include_once 'PEAR/Config.php';
+            $default_user = '';
+            if (class_exists('PEAR_Config')) {
+                $config = PEAR_Config::singleton();
+                $default_user = $config->get('username');
+            }
+
             $type     = readAnswer('What type of maintainer?', true, 'lead', array('lead','developer','contributor','helper'));
             $name     = readAnswer('Enter maintainer' . '\'s name', true);
-            $username = readAnswer('Enter maintainer' . '\'s username', true);
-            $email    = readAnswer('Enter maintainer' . '\'s email', true);
+
+            if ($default_user !== '' && !in_array($default_user, $maintainer_usernames)) {
+                $username = readAnswer('Enter maintainer' . '\'s username', true, $default_user);
+            } else {
+                $username = readAnswer('Enter maintainer' . '\'s username', true);
+            }
+
+            $email    = readAnswer('Enter maintainer' . '\'s email', true, $username.'@php.net');
 
             $pfm->addMaintainer($type, $username, $name, $email);
             break;
@@ -793,11 +816,28 @@ if (!file_exists($package_file)) {
         $number_maintainers = readAnswer('How many maintainers?', true);
     }
 
+    // set the pear username as default until it is used as one of the users
+    include_once 'PEAR/Config.php';
+    $default_user = '';
+    if (class_exists('PEAR_Config')) {
+        $config = PEAR_Config::singleton();
+        $default_user = $config->get('username');
+    }
+    $default_used = false;
+
     for ($i = 1; $i <= $number_maintainers; $i++) {
         $type     = readAnswer('What type of maintainer is #' . $i . '?', true, 'lead', array('lead','developer','contributor','helper'));
         $name     = readAnswer('Enter maintainer #' . $i . '\'s name', true);
-        $username = readAnswer('Enter maintainer #' . $i . '\'s username', true);
-        $email    = readAnswer('Enter maintainer #' . $i . '\'s email', true);
+
+        if ($default_user !== '' && !$default_used) {
+            $username = readAnswer('Enter maintainer #' . $i . '\'s username', true, $default_user);
+            $email    = readAnswer('Enter maintainer #' . $i . '\'s email', true, $default_user.'@php.net');
+
+            $default_used = ($username === $default_user);
+        } else {
+            $username = readAnswer('Enter maintainer #' . $i . '\'s username', true);
+            $email    = readAnswer('Enter maintainer #' . $i . '\'s email', true, $username.'@php.net');
+        }
 
         $pfm->addMaintainer($type, $username, $name, $email);
     }
