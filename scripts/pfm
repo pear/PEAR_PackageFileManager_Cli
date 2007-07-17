@@ -25,6 +25,7 @@ PEAR::setErrorHandling(PEAR_ERROR_DIE);
 
 define('WINDOWS', (substr(PHP_OS, 0, 3) == 'WIN'));
 $default_package_path = '.';
+$default_package_filename = 'package.xml';
 
 // ref http://pear.php.net/group/docs/20040402-la.php
 $licenses = array(
@@ -86,7 +87,6 @@ $pear_config_params = array(
     'sig_type',
 );
 
-
 $tty = WINDOWS ? @fopen('\con', 'r') : @fopen('/dev/tty', 'r');
 
 if (!$tty) {
@@ -114,6 +114,43 @@ function getList($array)
     } else {
         return array($array);
     }
+}
+
+// This'd be a nice addition to core php
+function file_append_contents($filename, $contents)
+{
+    $fp = fopen($filename, 'a') or die('Error opening file for appending: ' . $filename . "\n");
+    fwrite($fp, $contents) or die('Error writing to file: ' . $filename . "\n");
+}
+
+function write_package_comments($package_path, $cli_options)
+{
+    $comments = "<!-- PEAR_PackageFileManager_Cli options\n";
+    $comments .= serialize($cli_options);
+    $comments .= "\n-->";
+    global $default_package_filename;
+    file_append_contents($package_path . DIRECTORY_SEPARATOR . $default_package_filename, $comments);
+}
+
+function determineFileListGenerator($package_path)
+{
+    $dir = opendir($package_path);
+    while (($file = readdir($dir)) !== false) {
+
+        switch ($file) {
+
+            case 'CVS':
+            return 'cvs';
+
+            case '.svn':
+            return 'svn';
+
+            default:
+            break;
+        }
+    }
+
+    return 'file';
 }
 
 /**
@@ -668,6 +705,7 @@ EOT;
     return $value;
 }
 
+
 //
 // XML callbacks
 //
@@ -754,7 +792,7 @@ if (!isset($argv[1])) {
     $package_path = $argv[1];
 }
 
-$package_file = $package_path . DIRECTORY_SEPARATOR . 'package.xml';
+$package_file = $package_path . DIRECTORY_SEPARATOR . $default_package_filename;
 
 if (!file_exists($package_file)) {
 
@@ -774,16 +812,23 @@ if (!file_exists($package_file)) {
 
     $baseinstalldir = readAnswer('Enter the base install directory', true);
 
+
+    //
+    // try to autodetermine the file listing generator
+    //
+    $filelist_generator = determineFileListGenerator($package_path);
+
     $pfm->setOptions(array(
-        'packagedirectory' => $package_path,
-        'baseinstalldir'   => $baseinstalldir,
+        'filelistgenerator' => $filelist_generator,
+        'packagedirectory'  => $package_path,
+        'baseinstalldir'    => $baseinstalldir,
         // add scripts dir to the default list
-        'dir_roles'        => array(
-                                'docs'     => 'doc',
-                                'examples' => 'doc',
-                                'tests'    => 'test',
-                                'scripts'  => 'script',
-                              ),
+        'dir_roles'         => array(
+                                 'docs'     => 'doc',
+                                 'examples' => 'doc',
+                                 'tests'    => 'test',
+                                 'scripts'  => 'script',
+                               ),
         ));
 
     // basename will grab the last directory in a path
@@ -861,6 +906,7 @@ if (!file_exists($package_file)) {
 
     // XXX
     // try to automatically determine the baseinstalldir
+    //
 
     $xml_parser = xml_parser_create();
     xml_set_element_handler($xml_parser, "elementStart", "elementEnd");
@@ -877,10 +923,29 @@ if (!file_exists($package_file)) {
         }
     }
     xml_parser_free($xml_parser);
+
+/*
+    rewind($fp) or die("Error seeking in package file\n");
+    while (!feof($fp)) {
+        $line = fgets($fp);
+        if ($line === false) {
+            break;
+        }
+        if (trim($line) === '<!-- PEAR_PackageFileManager_Cli options') {
+            if (!feof($fp)) {
+                $value = unserialize(trim(fgets($fp, 4096)));
+                if ($value !== false) {
+                    $cli_options = $value;
+                }
+            }
+        }
+    }
+*/
     fclose($fp);
 
     $baseinstalldir = readOption('Enter the base install directory', $retrieved_baseinstalldir);
 
+    $filelist_generator = determineFileListGenerator($package_path);
 
     //
     // - Don't clearcontents - this will erase existing file settings like tasks, roles, baseinstalldir, etc
@@ -890,16 +955,17 @@ if (!file_exists($package_file)) {
     //
 
     $pfm = &PEAR_PackageFileManager2::importOptions($package_file, array(
-        'packagedirectory' => $package_path,
-        'baseinstalldir'   => $baseinstalldir,
-        'clearcontents'    => false,
+        'filelistgenerator' => $filelist_generator,
+        'packagedirectory'  => $package_path,
+        'baseinstalldir'    => $baseinstalldir,
+        'clearcontents'     => false,
         // add scripts dir to the default list
-        'dir_roles'        => array(
-                                'docs'     => 'doc',
-                                'examples' => 'doc',
-                                'tests'    => 'test',
-                                'scripts'  => 'script',
-                              ),
+        'dir_roles'         => array(
+                                 'docs'     => 'doc',
+                                 'examples' => 'doc',
+                                 'tests'    => 'test',
+                                 'scripts'  => 'script',
+                               ),
         ));
 
     // refresh the contents and filelist
