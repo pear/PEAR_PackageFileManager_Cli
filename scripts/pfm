@@ -786,7 +786,10 @@ if (!file_exists($package_file)) {
                               ),
         ));
 
-    $pfm->setPackage(         readAnswer('Enter the name of the package', true));
+    // basename will grab the last directory in a path
+    $default_package_name = basename(realpath($package_path));
+
+    $pfm->setPackage(         readAnswer('Enter the name of the package', true, $default_package_name));
 
     $channel_type = readAnswer('Channel or URI based package?', true, 'c', array('c','u'));
     if ($channel_type === 'c') {
