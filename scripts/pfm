@@ -93,10 +93,11 @@ if (!$tty) {
     $tty = fopen('php://stdin', 'r');
 }
 
-function readTTY()
+function readTTY($trim = true)
 {
     global $tty;
-    return trim(fgets($tty, 1024));
+    $return = fgets($tty, 1024);
+    return $trim ? trim($return) : $return;
 }
 
 function getList($array)
@@ -190,6 +191,59 @@ function readAnswer($message, $required = false, $default = null, $options = nul
     echo "\n";
 
     return $value;
+}
+
+/**
+ * Post a queston and read a multiline answer from the console.
+ */
+function readMultilineAnswer($message, $required = false, $default = null)
+{
+    if (!is_null($default)) {
+        $message .= ' [' . $default . ']';
+    }
+
+    if ($required) {
+        $message .= '*';
+    }
+
+    $message .= " (2 blank lines to finish):\n";
+
+    echo $message;
+
+    $empty_line_count = 0;
+    $answer = '';
+
+    while (1) {
+        $value = readTTY(false);
+
+        if (trim($value) === '') {
+            $empty_line_count++;
+        } else {
+            $empty_line_count = 0;
+        }
+
+        if ($empty_line_count >= 2) {
+
+            $answer = rtrim($answer);
+
+            if (!is_null($default) && empty($answer)) {
+
+                return $default;
+
+            } elseif ($required && empty($answer)) {
+
+               echo $message;
+               $empty_line_count = 0;
+               continue;
+
+            } else {
+
+                return $answer;
+            }
+        }
+
+        $answer .= $value;
+    }
 }
 
 /**
@@ -844,14 +898,15 @@ if (!file_exists($package_file)) {
     }
 
     $pfm->setSummary(         readAnswer('Enter a 1 line summary', true));
-    $pfm->setDescription(     readAnswer('Enter a description', true));
+    $pfm->setDescription(     readMultilineAnswer('Enter a description', true));
+
     $release_version      =   readAnswer('Enter the release version', true);
     $pfm->setReleaseVersion($release_version);
     $pfm->setAPIVersion(      readAnswer('Enter the API version', true, $release_version));
     $release_stability    =   readAnswer('Choose a release stability', true, 'alpha', array('alpha','beta','stable'));
     $pfm->setReleaseStability($release_stability);
     $pfm->setAPIStability(    readAnswer('Choose an API stability', true, $release_stability, array('alpha','beta','stable')));
-    $pfm->setNotes(           readAnswer('Enter any release notes', true));
+    $pfm->setNotes(           readMultilineAnswer('Enter any release notes', true));
     $pfm->setPhpDep(          readAnswer('Enter the minimum PHP version', true, '5'));
     $pfm->setPearinstallerDep(readAnswer('Enter the minimum PEAR Installer version', true, '1.4.0'));
 
@@ -1014,7 +1069,7 @@ while (true) {
         break;
 
         case 4:
-        $pfm->setDescription(readAnswer('Enter a description', true, $attr['description']));
+        $pfm->setDescription(readMultilineAnswer('Enter a description', true, $attr['description']));
         break;
 
         case 5:
@@ -1039,7 +1094,7 @@ while (true) {
         break;
 
         case 9:
-        $pfm->setNotes(readAnswer('Enter any release notes', true, $attr['notes']));
+        $pfm->setNotes(readMultilineAnswer('Enter any release notes', true, $attr['notes']));
         break;
 
         case 10:
