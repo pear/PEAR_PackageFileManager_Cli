@@ -34,7 +34,6 @@ Feedback is always appreciated.</description>
  * Added default of &lt;username&gt;@php.net for emails</notes>
  <contents>
   <dir baseinstalldir="PEAR/PackageFileManager" name="/">
-   <file baseinstalldir="PEAR/PackageFileManager" md5sum="0fa37914f83f6e51eb3c5fd9d1ca9dda" name="docs/release_notes.txt" role="doc" />
    <file baseinstalldir="" md5sum="d801bcf1165fd34014232cb62f9f8ec0" name="scripts/pfm" role="script">
     <tasks:replace from="@php_bin@" to="php_bin" type="pear-config" />
     <tasks:replace from="@package_version@" to="version" type="package-info" />
