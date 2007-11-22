@@ -24,8 +24,7 @@ if (!class_exists('PEAR_PackageFileManager2')) {
 PEAR::setErrorHandling(PEAR_ERROR_DIE);
 
 define('WINDOWS', (substr(PHP_OS, 0, 3) == 'WIN'));
-$default_package_path = '.';
-$default_package_filename = 'package.xml';
+$default_package_path = './package.xml';
 
 // ref http://pear.php.net/group/docs/20040402-la.php
 $licenses = array(
@@ -129,13 +128,12 @@ function write_package_comments($package_path, $cli_options)
     $comments = "<!-- PEAR_PackageFileManager_Cli options\n";
     $comments .= serialize($cli_options);
     $comments .= "\n-->";
-    global $default_package_filename;
-    file_append_contents($package_path . DIRECTORY_SEPARATOR . $default_package_filename, $comments);
+    file_append_contents($package_path, $comments);
 }
 
-function determineFileListGenerator($package_path)
+function determineFileListGenerator($package_dir)
 {
-    $dir = opendir($package_path);
+    $dir = opendir($package_dir);
     while (($file = readdir($dir)) !== false) {
 
         switch ($file) {
@@ -836,9 +834,9 @@ PEAR Package File Manager Command Line Tool
 
 if (!isset($argv[1])) {
 
-    $package_path = readAnswer('Please enter the location of your package', true, $default_package_path);
-    while (!is_dir($package_path)) {
-        $package_path = readAnswer('Please enter the location of your package', true, $default_package_path);
+    $package_path = readAnswer('Please enter the location of your package file', true, $default_package_path);
+    while (file_exists($package_path) && !is_file($package_path) || !file_exists($package_path) && !is_dir(dirname($package_path))) {
+        $package_path = readAnswer('Please enter the location of your package file', true, $default_package_path);
     }
 
 } else {
@@ -846,16 +844,15 @@ if (!isset($argv[1])) {
     $package_path = $argv[1];
 }
 
-$package_file = $package_path . DIRECTORY_SEPARATOR . $default_package_filename;
+$package_dir = dirname($package_path);
 
-if (!file_exists($package_file)) {
+if (!file_exists($package_path)) {
 
     //
     // Create a new package file
     //
 
-
-    if (!is_writable($package_path)) {
+    if (!is_writable($package_dir)) {
         die("Unable to write package file\n");
     }
 
@@ -870,11 +867,11 @@ if (!file_exists($package_file)) {
     //
     // try to autodetermine the file listing generator
     //
-    $filelist_generator = determineFileListGenerator($package_path);
+    $filelist_generator = determineFileListGenerator($package_dir);
 
     $pfm->setOptions(array(
         'filelistgenerator' => $filelist_generator,
-        'packagedirectory'  => $package_path,
+        'packagedirectory'  => $package_dir,
         'baseinstalldir'    => $baseinstalldir,
         // add scripts dir to the default list
         'dir_roles'         => array(
@@ -886,7 +883,7 @@ if (!file_exists($package_file)) {
         ));
 
     // basename will grab the last directory in a path
-    $default_package_name = basename(realpath($package_path));
+    $default_package_name = basename(realpath($package_dir));
 
     $pfm->setPackage(         readAnswer('Enter the name of the package', true, $default_package_name));
 
@@ -953,7 +950,7 @@ if (!file_exists($package_file)) {
     // Use the existing package file
     //
 
-    if (!is_writable($package_file)) {
+    if (!is_writable($package_path)) {
         die("Unable to write package file\n");
     }
 
@@ -966,7 +963,7 @@ if (!file_exists($package_file)) {
     $xml_parser = xml_parser_create();
     xml_set_element_handler($xml_parser, "elementStart", "elementEnd");
 
-    if (!($fp = fopen($package_file, "r"))) {
+    if (!($fp = fopen($package_path, "r"))) {
         die("could not open package file\n");
     }
 
@@ -1000,7 +997,7 @@ if (!file_exists($package_file)) {
 
     $baseinstalldir = readOption('Enter the base install directory', $retrieved_baseinstalldir);
 
-    $filelist_generator = determineFileListGenerator($package_path);
+    $filelist_generator = determineFileListGenerator($package_dir);
 
     //
     // - Don't clearcontents - this will erase existing file settings like tasks, roles, baseinstalldir, etc
@@ -1009,9 +1006,9 @@ if (!file_exists($package_file)) {
     // - Do regenerate the filelist from the refreshed contents
     //
 
-    $pfm = &PEAR_PackageFileManager2::importOptions($package_file, array(
+    $pfm = &PEAR_PackageFileManager2::importOptions($package_path, array(
         'filelistgenerator' => $filelist_generator,
-        'packagedirectory'  => $package_path,
+        'packagedirectory'  => $package_dir,
         'baseinstalldir'    => $baseinstalldir,
         'clearcontents'     => false,
         // add scripts dir to the default list
