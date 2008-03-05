@@ -38,6 +38,10 @@ Feedback is always appreciated.</description>
     <tasks:replace from="@php_bin@" to="php_bin" type="pear-config" />
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
+   <file baseinstalldir="" md5sum="" name="scripts/pfm.bat" role="script">
+    <tasks:replace from="@php_bin@" to="php_bin" type="pear-config" />
+    <tasks:replace from="@bin_dir@" to="bin_dir" type="pear-config" />
+   </file>
   </dir>
  </contents>
  <dependencies>
@@ -58,6 +62,17 @@ Feedback is always appreciated.</description>
    </extension>
   </required>
  </dependencies>
+ <phprelease>
+  <installconditions>
+   <os>
+    <name>windows</name>
+   </os>
+  </installconditions>
+  <filelist>
+   <install as="pfm.php" name="scripts/pfm" />
+   <install as="pfm.bat" name="scripts/pfm.bat" />
+  </filelist>
+ </phprelease>
  <phprelease>
   <filelist>
    <install as="pfm" name="scripts/pfm" />
