@@ -92,6 +92,14 @@ if (!$tty) {
     $tty = fopen('php://stdin', 'r');
 }
 
+function usage()
+{
+    echo "Usage: pfm [package.xml]\n";
+    echo "A command line interface to PEAR_PackageFileManager.\n\n";
+    echo "Use this tool as a quick alternative to writing a php script to create or edit\n";
+    echo "your package xml files.\n";
+}
+
 function readTTY($trim = true)
 {
     global $tty;
@@ -838,7 +846,9 @@ if (!isset($argv[1])) {
     while (file_exists($package_path) && !is_file($package_path) || !file_exists($package_path) && !is_dir(dirname($package_path))) {
         $package_path = readAnswer('Please enter the location of your package file', true, $default_package_path);
     }
-
+} elseif (($argv[1] == '-h') or ($argv[1] == '--help')) {
+    usage();
+    exit;
 } else {
     
     $package_path = $argv[1];
