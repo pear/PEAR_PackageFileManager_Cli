@@ -99,10 +99,13 @@ function version()
 
 function usage()
 {
-    echo "Usage: pfm [package.xml]\n",
+    echo "Usage: pfm [options] [package.xml]\n",
          'A command line interface to PEAR_PackageFileManager. ',
          "Use this tool as a quick alternative to writing a php script to create or edit\n",
-         "your package xml files.\n\n";
+         "your package xml files.\n\n",
+         "Options:\n",
+         "--help -h     Display this usage message\n",
+         "--version -v  Display tool version\n\n";
 }
 
 function readTTY($trim = true)
