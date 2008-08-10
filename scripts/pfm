@@ -92,12 +92,17 @@ if (!$tty) {
     $tty = fopen('php://stdin', 'r');
 }
 
+function version()
+{
+    echo "Release: @package_version@\n\n";
+}
+
 function usage()
 {
-    echo "Usage: pfm [package.xml]\n";
-    echo "A command line interface to PEAR_PackageFileManager.\n\n";
-    echo "Use this tool as a quick alternative to writing a php script to create or edit\n";
-    echo "your package xml files.\n";
+    echo "Usage: pfm [package.xml]\n",
+         'A command line interface to PEAR_PackageFileManager. ',
+         "Use this tool as a quick alternative to writing a php script to create or edit\n",
+         "your package xml files.\n\n";
 }
 
 function readTTY($trim = true)
@@ -848,6 +853,9 @@ if (!isset($argv[1])) {
     }
 } elseif (($argv[1] == '-h') or ($argv[1] == '--help')) {
     usage();
+    exit;
+} elseif (($argv[1] == '-v') or ($argv[1] == '--version')) {
+    version();
     exit;
 } else {
     
