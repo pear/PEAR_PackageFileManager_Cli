@@ -880,6 +880,7 @@ if (!file_exists($package_path)) {
     echo 'Creating a new package file ' . "...\n\n";
 
     $pfm = new PEAR_PackageFileManager2;
+    $pfm->setOptions(array('ignore'=>'*~'));
     $pfm->setPackageType('php');
 
     $baseinstalldir = readAnswer('Enter the base install directory', true);
@@ -1032,6 +1033,7 @@ if (!file_exists($package_path)) {
         'packagedirectory'  => $package_dir,
         'baseinstalldir'    => $baseinstalldir,
         'clearcontents'     => false,
+        'ignore'            => array('*~'),
         // add scripts dir to the default list
         'dir_roles'         => array(
                                  'docs'     => 'doc',
