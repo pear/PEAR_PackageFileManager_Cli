@@ -415,16 +415,20 @@ function editDependencies(PEAR_PackageFileManager2 $pfm)
 
             case 3:
             $pfm->clearDeps();
-            $pfm->setPearinstallerDep('1.4.0');
+            $pfm->setPearinstallerDep('1.5.6');
             break;
 
             case 4:
-            $version  = readAnswer('PHP version', true);
+            $attr = $pfm->getArray();
+
+            $version  = readAnswer('PHP version', true, $attr['dependencies']['required']['php']['min']);
             $pfm->setPhpDep($version);
             break;
 
             case 5:
-            $version  = readAnswer('PEAR installer version', true);
+            $attr = $pfm->getArray();
+
+            $version  = readAnswer('PEAR installer version', true, $attr['dependencies']['required']['pearinstaller']['min']);
             $pfm->setPearinstallerDep($version);
             break;
 
@@ -941,7 +945,7 @@ if (!file_exists($package_path)) {
     $pfm->setAPIStability(    readAnswer('Choose an API stability', true, $release_stability, array('alpha','beta','stable')));
     $pfm->setNotes(           readMultilineAnswer('Enter any release notes', true));
     $pfm->setPhpDep(          readAnswer('Enter the minimum PHP version', true, '5'));
-    $pfm->setPearinstallerDep(readAnswer('Enter the minimum PEAR Installer version', true, '1.4.0'));
+    $pfm->setPearinstallerDep(readAnswer('Enter the minimum PEAR Installer version', true, '1.5.6'));
 
     $license = readOption('Please choose a license from one of the following options', array_keys($licenses));
     $pfm->setLicense($license, $licenses[$license]);
