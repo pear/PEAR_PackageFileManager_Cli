@@ -1,0 +1,1 @@
+Fix defect with PEAR_PackageFile_v2_Validator and _multipleInstallAs() vs install conditions, displayed by some packages like this one.
