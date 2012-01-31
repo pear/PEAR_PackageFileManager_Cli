@@ -74,7 +74,11 @@ Drop PHP 4
    <install as="pfm.bat" name="scripts/pfm.bat" />
   </filelist>
  </phprelease>
- <phprelease />
+ <phprelease>
+   <filelist>
+    <install as="pfm" name="scripts/pfm" />
+   </filelist>
+ </phprelease>
  <changelog>
   <release>
    <version>
