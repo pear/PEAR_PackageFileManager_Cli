@@ -21,7 +21,7 @@ if (!class_exists('PEAR_PackageFileManager2')) {
     die("Missing PEAR_PackageFileManager. Please check your PEAR installation.\n");
 }
 
-PEAR::setErrorHandling(PEAR_ERROR_DIE);
+PEAR::setErrorHandling(PEAR_ERROR_EXCEPTION);
 
 define('WINDOWS', (substr(PHP_OS, 0, 3) == 'WIN'));
 $default_package_path = './package.xml';
@@ -417,6 +417,17 @@ function editDependencies(PEAR_PackageFileManager2 $pfm)
             $pfm->clearDeps();
             $pfm->setPearinstallerDep('1.4.0');
             break;
+
+            case 4:
+            $version  = readAnswer('PHP version', true);
+            $pfm->setPhpDep($version);
+            break;
+
+            case 5:
+            $version  = readAnswer('PEAR installer version', true);
+            $pfm->setPearinstallerDep($version);
+            break;
+
         }
 
         $value = dependencyMenu($pfm);
