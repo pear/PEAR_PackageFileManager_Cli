@@ -305,7 +305,7 @@ function abbreviate($string, $length, $dotdot = '...')
 /**
  * Main menu
  */
-function menu(&$pfm)
+function menu(PEAR_PackageFileManager2 $pfm)
 {
     $attr = $pfm->getArray();
 
@@ -351,7 +351,7 @@ EOT;
 /**
  * Edit Dependencies 'screen'
  */
-function editDependencies(&$pfm)
+function editDependencies(PEAR_PackageFileManager2 $pfm)
 {
     $value = dependencyMenu($pfm);
 
@@ -426,7 +426,7 @@ function editDependencies(&$pfm)
 /**
  * Menu for Edit Dependencies 'screen'
  */
-function dependencyMenu(&$pfm)
+function dependencyMenu(PEAR_PackageFileManager2 $pfm)
 {
     $attr = $pfm->getArray();
 
@@ -544,7 +544,7 @@ EOT;
 /**
  * Edit Maintainers 'screen'
  */
-function editMaintainers(&$pfm)
+function editMaintainers(PEAR_PackageFileManager2 $pfm)
 {
     $value = maintainerMenu($pfm);
 
@@ -603,7 +603,7 @@ function editMaintainers(&$pfm)
 /**
  * Menu for Edit Maintainers 'screen'
  */
-function maintainerMenu(&$pfm)
+function maintainerMenu($pfm)
 {
     $attr = $pfm->getArray();
  
