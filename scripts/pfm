@@ -781,7 +781,7 @@ EOT;
 // XML callbacks
 //
 
-$retrieved_baseinstalldir = array();
+$retrieved_baseinstalldir = array(0 => '/');
 function elementStart($parser, $name, $attrs)
 {
     if (($name === 'FILE' || $name === 'DIR') && isset($attrs['BASEINSTALLDIR']) && $attrs['BASEINSTALLDIR'] !== '') {
