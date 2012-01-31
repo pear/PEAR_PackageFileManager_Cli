@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.6.0" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0     http://pear.php.net/dtd/tasks-1.0.xsd     http://pear.php.net/dtd/package-2.0     http://pear.php.net/dtd/package-2.0.xsd">
+<package packagerversion="1.9.4" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0     http://pear.php.net/dtd/tasks-1.0.xsd     http://pear.php.net/dtd/package-2.0     http://pear.php.net/dtd/package-2.0.xsd">
  <name>PEAR_PackageFileManager_Cli</name>
  <channel>pear.php.net</channel>
  <summary>A command line interface to PEAR_PackageFileManager</summary>
@@ -16,38 +16,39 @@ Feedback is always appreciated.</description>
   <email>shangxiao@php.net</email>
   <active>yes</active>
  </lead>
- <date>2007-07-18</date>
- <time>15:27:28</time>
+ <date>2012-01-31</date>
+ <time>22:59:08</time>
  <version>
-  <release>0.3.0</release>
-  <api>0.3.0</api>
+  <release>0.4.0</release>
+  <api>0.4.0</api>
  </version>
  <stability>
   <release>alpha</release>
   <api>alpha</api>
  </stability>
  <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
- <notes> * Implement Feature #11546: Autodetect username from pear config [shangxiao]
- * Implement Feature #11547: Autodetect package name from directory [shangxiao]
- * Added ability to read multiline answers for description and notes
- * Detect whether to use svn or cvs filelist generator
- * Added default of &lt;username&gt;@php.net for emails</notes>
+ <notes>
+Add git support
+Drop PHP 4
+ </notes>
  <contents>
   <dir baseinstalldir="PEAR/PackageFileManager" name="/">
-   <file baseinstalldir="" md5sum="d801bcf1165fd34014232cb62f9f8ec0" name="scripts/pfm" role="script">
+   <file baseinstalldir="PEAR/PackageFileManager" md5sum="0fa37914f83f6e51eb3c5fd9d1ca9dda" name="docs/release_notes.txt" role="doc" />
+   <file baseinstalldir="" md5sum="2be6814af1ee3e5fd776063dcda6116a" name="scripts/pfm" role="script">
     <tasks:replace from="@php_bin@" to="php_bin" type="pear-config" />
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="" md5sum="" name="scripts/pfm.bat" role="script">
+   <file baseinstalldir="" md5sum="61684a2414304d5ddd22cb9f4c1fc022" name="scripts/pfm.bat" role="script">
     <tasks:replace from="@php_bin@" to="php_bin" type="pear-config" />
     <tasks:replace from="@bin_dir@" to="bin_dir" type="pear-config" />
    </file>
+   <file baseinstalldir="PEAR/PackageFileManager" md5sum="62076a542228f04a77eb18b72d12cccb" name="README" role="data" />
   </dir>
  </contents>
  <dependencies>
   <required>
    <php>
-    <min>4.2.0</min>
+    <min>5.0.0</min>
    </php>
    <pearinstaller>
     <min>1.4.3</min>
@@ -73,11 +74,6 @@ Feedback is always appreciated.</description>
    <install as="pfm.bat" name="scripts/pfm.bat" />
   </filelist>
  </phprelease>
- <phprelease>
-  <filelist>
-   <install as="pfm" name="scripts/pfm" />
-  </filelist>
- </phprelease>
  <changelog>
   <release>
    <version>
@@ -90,7 +86,9 @@ Feedback is always appreciated.</description>
    </stability>
    <date>2007-06-06</date>
    <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
-   <notes>Initial Release</notes>
+   <notes>
+Initial Release
+   </notes>
   </release>
   <release>
    <version>
@@ -103,12 +101,14 @@ Feedback is always appreciated.</description>
    </stability>
    <date>2007-06-09</date>
    <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
-   <notes>- Added support for URI &apos;channel&apos;.
+   <notes>
+- Added support for URI &apos;channel&apos;.
 - Added support for scripts by setting the role of any file in the scripts 
   dir, removing the baseinstalldir attribute and adding install directives.
 - Improved replacement task questions by listing available replacement 
   parameters.
-- Added a few other improvements</notes>
+- Added a few other improvements
+   </notes>
   </release>
   <release>
    <version>
@@ -121,7 +121,9 @@ Feedback is always appreciated.</description>
    </stability>
    <date>2007-06-19</date>
    <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
-   <notes>* Fix Bug #11347 PFM Reference [Tias Guns]</notes>
+   <notes>
+* Fix Bug #11347 PFM Reference [Tias Guns]
+   </notes>
   </release>
   <release>
    <version>
@@ -132,13 +134,31 @@ Feedback is always appreciated.</description>
     <release>alpha</release>
     <api>alpha</api>
    </stability>
-   <date>2007-07-18</date>
+   <date>2012-01-31</date>
    <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
-   <notes> * Implement Feature #11546: Autodetect username from pear config [shangxiao]
- * Implement Feature #11547: Autodetect package name from directory [shangxiao]
- * Added ability to read multiline answers for description and notes
- * Detect whether to use svn or cvs filelist generator
- * Added default of &lt;username&gt;@php.net for emails</notes>
+   <notes>
+* Implement Feature #11546: Autodetect username from pear config [shangxiao]
+* Implement Feature #11547: Autodetect package name from directory [shangxiao]
+* Added ability to read multiline answers for description and notes
+* Detect whether to use svn or cvs filelist generator
+* Added default of &lt;username&gt;@php.net for emails
+   </notes>
+  </release>
+  <release>
+   <version>
+    <release>0.4.0</release>
+    <api>0.4.0</api>
+   </version>
+   <stability>
+    <release>alpha</release>
+    <api>alpha</api>
+   </stability>
+   <date>2012-01-31</date>
+   <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
+   <notes>
+Add git support
+Drop PHP 4
+   </notes>
   </release>
  </changelog>
 </package>
