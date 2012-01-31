@@ -3,7 +3,7 @@
 /**
  * PEAR_PackageFileManager_Cli
  *
- * PHP versions 4 and 5
+ * PHP version 5
  *
  * A command line interface to managing package files.
  *
@@ -15,7 +15,7 @@
  * @link       
  */
 
-include_once 'PEAR/PackageFileManager2.php';
+require_once 'PEAR/PackageFileManager2.php';
 
 if (!class_exists('PEAR_PackageFileManager2')) {
     die("Missing PEAR_PackageFileManager. Please check your PEAR installation.\n");
@@ -159,6 +159,9 @@ function determineFileListGenerator($package_dir)
 
             case '.svn':
             return 'svn';
+
+            case '.git':
+            return 'git';
 
             default:
             break;
