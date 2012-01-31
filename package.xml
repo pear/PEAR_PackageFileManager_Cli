@@ -17,7 +17,7 @@ Feedback is always appreciated.</description>
   <active>yes</active>
  </lead>
  <date>2012-01-31</date>
- <time>22:59:08</time>
+ <time>22:59:55</time>
  <version>
   <release>0.4.0</release>
   <api>0.4.0</api>
@@ -74,6 +74,7 @@ Drop PHP 4
    <install as="pfm.bat" name="scripts/pfm.bat" />
   </filelist>
  </phprelease>
+ <phprelease />
  <changelog>
   <release>
    <version>
